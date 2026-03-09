@@ -6,9 +6,10 @@ import 'package:taskati/core/appcolors.dart';
 import 'package:taskati/core/appstyles.dart';
 import 'package:taskati/core/reuseable%20widgets/background_widget.dart';
 import 'package:taskati/core/reuseable%20widgets/mainbutton.dart';
-import 'package:taskati/feature/home/home.dart';
+import 'package:taskati/feature/start/data/user_local_repository.dart';
 import 'package:taskati/feature/start/widgets/choosebutton.dart';
 import 'package:taskati/feature/start/widgets/textfiels.dart';
+import 'package:taskati/feature/tasks/presentation/screens/tasks_home_screen.dart';
 
 class Start extends StatefulWidget {
   const Start({super.key});
@@ -18,9 +19,16 @@ class Start extends StatefulWidget {
 }
 
 class _StartState extends State<Start> {
+  final UserLocalRepository _userRepository = UserLocalRepository();
   final TextEditingController controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? image;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   Future<void> pickImage(ImageSource source) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
@@ -48,7 +56,7 @@ class _StartState extends State<Start> {
                       "Complete Your Profile",
                       style: AppTextStyles.titleLarge,
                     ),
-                    SizedBox(height: 86),
+                    const SizedBox(height: 86),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -58,7 +66,7 @@ class _StartState extends State<Start> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 21),
+                    const SizedBox(height: 21),
                     Stack(
                       children: [
                         ClipOval(
@@ -97,7 +105,7 @@ class _StartState extends State<Start> {
                           ),
                       ],
                     ),
-                    SizedBox(height: 34),
+                    const SizedBox(height: 34),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -115,7 +123,7 @@ class _StartState extends State<Start> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 45),
+                    const SizedBox(height: 45),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -127,11 +135,11 @@ class _StartState extends State<Start> {
                     ),
                     SizedBox(height: 8),
                     Textfield(hintText: "Your name", controller: controller),
-                    Spacer(),
+                    const Spacer(),
                     MainButton(
                       text: 'Let’s Start !',
-                      onPressed: () {
-                        if (image == null || controller.text.isEmpty) {
+                      onPressed: () async {
+                        if (image == null || controller.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -141,13 +149,17 @@ class _StartState extends State<Start> {
                             ),
                           );
                         } else {
-                          Navigator.push(
+                          await _userRepository.saveProfile(
+                            name: controller.text.trim(),
+                            imagePath: image!.path,
+                          );
+                          if (!context.mounted) {
+                            return;
+                          }
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomeScreen(
-                                name: controller.text,
-                                image: image!,
-                              ),
+                              builder: (context) => const TasksHomeScreen(),
                             ),
                           );
                         }
